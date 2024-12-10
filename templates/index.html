@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sentiment Analysis & Emotion Detection</title>
+    <style>
+      :root {
+        --background: #f7f8fc;
+        --text-color: #34495e;
+        --textarea-bg: #ffffff;
+        --textarea-border: #bdc3c7;
+        --textarea-placeholder: #7f8c8d;
+        --button-bg: #3498db;
+        --button-hover: #2980b9;
+        --result-bg: #ffffff;
+        --shadow: rgba(0, 0, 0, 0.1);
+      }
+
+      body.dark {
+        --background: linear-gradient(to bottom right, #1c1f26, #2c3e50);
+        --text-color: #ecf0f1;
+        --textarea-bg: rgba(52, 152, 219, 0.8);
+        --textarea-border: #34495e;
+        --textarea-placeholder: #ecf0f1;
+        --button-bg: #1abc9c;
+        --button-hover: #16a085;
+        --result-bg: rgba(52, 152, 219, 0.8);
+        --shadow: rgba(0, 0, 0, 0.3);
+      }
+
+      body {
+        font-family: 'Roboto', sans-serif;
+        margin: 0;
+        padding: 0;
+        background: var(--background);
+        color: var(--text-color);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        transition: background 0.5s ease, color 0.5s ease;
+      }
+
+      h1 {
+        text-align: center;
+        font-size: 2.5rem;
+        margin-bottom: 20px;
+      }
+
+      textarea {
+        width: 80%;
+        height: 150px;
+        margin: 20px auto;
+        display: block;
+        padding: 15px;
+        font-size: 1rem;
+        border: 1px solid var(--textarea-border);
+        border-radius: 10px;
+        background-color: var(--textarea-bg);
+        color: var(--text-color);
+        resize: none;
+        box-shadow: 0 4px 6px var(--shadow);
+        transition: box-shadow 0.3s ease, border-color 0.3s ease;
+      }
+
+      textarea::placeholder {
+        color: var(--textarea-placeholder);
+        font-style: italic;
+      }
+
+      textarea:focus {
+        border-color: var(--button-bg);
+        box-shadow: 0 4px 10px var(--button-bg);
+        outline: none;
+      }
+
+      button {
+        background-color: var(--button-bg);
+        color: #ffffff;
+        font-size: 1rem;
+        padding: 12px 24px;
+        margin: 10px 5px;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: background-color 0.3s ease, transform 0.2s ease;
+        box-shadow: 0 4px 6px var(--shadow);
+      }
+
+      button:hover {
+        background-color: var(--button-hover);
+        transform: translateY(-2px);
+      }
+
+      button:focus {
+        outline: none;
+      }
+
+      #result {
+        width: 80%;
+        margin: 20px auto;
+        background-color: var(--result-bg);
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px var(--shadow);
+      }
+
+      #result p {
+        font-size: 1.1rem;
+        margin: 10px 0;
+      }
+
+      #emotionPlot {
+        max-width: 100%;
+        margin-top: 20px;
+        display: block;
+      }
+
+      #themeToggle {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background-color: #7f8c8d;
+        color: #ffffff;
+        padding: 10px 15px;
+        border-radius: 50px;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+      }
+
+      #themeToggle:hover {
+        background-color: #95a5a6;
+      }
+
+      footer {
+        text-align: center;
+        font-size: 0.9rem;
+        color: var(--text-color);
+        padding: 10px;
+        margin-top: 30px;
+      }
+    </style>
+  </head>
+  <body>
+    <button id="themeToggle" onclick="toggleTheme()">🌗 Switch Theme</button>
+    <h1>Sentiment Analysis & Emotion Detection</h1>
+    <textarea
+      id="textInput"
+      rows="5"
+      cols="50"
+      placeholder="Enter your text here..."
+    ></textarea>
+    <div>
+      <button onclick="analyzeText()">Analyze</button>
+      <button onclick="startSpeechToText()">🎤 Speak</button>
+      <button onclick="resetPage()">🔄 Refresh</button>
+    </div>
+    <div id="result"></div>
+    <img id="emotionPlot" alt="Emotion Bar Plot" style="display: none;" />
+    <footer>&copy; 2024 Sentiment Analysis Tool</footer>
+    <script>
+      function analyzeText() {
+        const textInput = document.getElementById("textInput").value;
+        fetch("/predict", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text: textInput }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.error) {
+              alert(data.error);
+            } else {
+              const sentiment = data.sentiment;
+              const dominantEmotion = data.dominant_emotion.emotion;
+
+              // Update the result section
+              document.getElementById("result").innerHTML = `
+                <p><strong>Text:</strong> ${data.text}</p>
+                <p><strong>Sentiment Score:</strong> ${sentiment.score.toFixed(2)}</p>
+                <p><strong>Sentiment:</strong> ${sentiment.sentiment}</p>
+                <p><strong>Dominant Emotion:</strong> ${dominantEmotion}</p>
+              `;
+
+              // Update the emotion plot
+              const plot = document.getElementById("emotionPlot");
+              plot.src = data.emotion_plot; // Set the base64 image as the source
+              plot.style.display = "block";
+            }
+          })
+          .catch((error) => console.error("Error:", error));
+      }
+
+      function startSpeechToText() {
+        const recognition = new (window.SpeechRecognition ||
+          window.webkitSpeechRecognition)();
+        recognition.lang = "en-US";
+        recognition.start();
+        recognition.onresult = (event) => {
+          document.getElementById("textInput").value =
+            event.results[0][0].transcript;
+        };
+        recognition.onerror = (event) => {
+          alert("Speech recognition error: " + event.error);
+        };
+      }
+
+      function toggleTheme() {
+        document.body.classList.toggle("dark");
+      }
+
+      function resetPage() {
+        // Reload the page to reset its state
+        location.reload();
+      }
+    </script>
+  </body>
+</html>
