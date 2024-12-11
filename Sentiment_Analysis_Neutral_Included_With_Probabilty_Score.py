@@ -36,7 +36,7 @@ def load_text_files_with_unsup(base_directory):
     return texts, labels
 
 # Load text data and labels
-base_directory = r"E:\Python\Sentiment-Analysis-NN\Sentiment\train"
+base_directory = r"D:\MiniProject\Sentiment-Analysis-Emotion-Detection-main\Sentiment\train"
 texts, labels = load_text_files_with_unsup(base_directory)
 
 # Initialize TF-IDF Vectorizer for feature extraction
