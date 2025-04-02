@@ -21,6 +21,7 @@ print("Emotion detection model and vectorizer loaded.")  # Debug print
 
 # Emotion mapping
 EMOTION_MAP = {
+               
     0: "anger",
     1: "fear",
     2: "joy",
